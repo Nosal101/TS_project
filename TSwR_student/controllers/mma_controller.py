@@ -12,6 +12,12 @@ class MMAController(Controller):
         #self.models = [None, None, None]
         self.Tp = Tp
         self.i = 0
+        self.Kp = 2
+        self.Kd = 1
+        self.u_prev = [0, 0]
+        self.x_prev = [0, 0, 0, 0]
+        self.first = True
+
         self.models = [
             self.create_manipulator_model(0.1, 0.05),
             self.create_manipulator_model(0.01, 0.01),
@@ -26,20 +32,36 @@ class MMAController(Controller):
 
     def choose_model(self, x):
         # TODO: Implement procedure of choosing the best fitting model from self.models (by setting self.i)
-        differences = [np.linalg.norm(x - model.state) for model in self.models]
-        self.i = np.argmin(differences)
-        print(self.models[self.i].m3)
+        high_error = 999999999
+        for i in range(0,3):
+            q_dot_dot = np.linalg.solve(self.models[i].M(x), self.u_prev - self.models[i].C(x) @ x[2:])
+            q_dot = self.x_prev[2:] + q_dot_dot * self.Tp
+            q = x[:2] + q_dot * self.Tp
+
+            x_estimate = np.concatenate([q , q_dot])
+
+            error = abs(x_estimate[0] - x[0]) + abs(x_estimate[1] - x[1]) + abs(x_estimate[2] - x[2]) + abs(x_estimate[3] - x[3])
+        
+            if error < high_error:
+                high_error = error
+                self.i = i
+
+        print("Model chosen: ", self.i, "Error: ", high_error)
+            
         
 
     def calculate_control(self, x, q_r, q_r_dot, q_r_ddot):
+        if self.first:
+            self.first = False
+            self.x_prev = x
         self.choose_model(x)
         q = x[:2]
         q_dot = x[2:]
         #v = q_r_ddot # TODO: add feedback
-        Kd = 1
-        Kp = 1
-        v = q_r_ddot + Kd*(q_r_dot - q_dot) + Kp*(q_r - q)
+        v = q_r_ddot + self.Kd*(q_r_dot - q_dot) + self.Kp*(q_r - q)
         M = self.models[self.i].M(x)
         C = self.models[self.i].C(x)
-        u = M @ v[:, np.newaxis] + C @ q_dot[:, np.newaxis]
+        u = M @ v + C @ q_dot
+        self.u_prev = u
+        self.x_prev = x
         return u
