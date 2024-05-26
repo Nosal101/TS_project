@@ -8,6 +8,7 @@ from trajectory_generators.sinusonidal import Sinusoidal
 from trajectory_generators.poly3 import Poly3
 from utils.simulation import simulate
 from controllers.mma_controller import MMAController
+from controllers.pd_controller import PDDecentralizedController
 
 Tp = 0.01
 start = 0
@@ -19,6 +20,7 @@ Switch to FeedbackLinearizationController as soon as you implement it  ?
 #controller = FeedbackLinearizationController(Tp)
 #controller = DummyController(Tp)
 controller = MMAController(Tp)
+#controller = PDDecentralizedController(2, 1)
 
 """
 Here you have some trajectory generators. You can use them to check your implementations.

@@ -13,7 +13,7 @@ class MMAController(Controller):
         self.Tp = Tp
         self.i = 0
         self.Kp = 2
-        self.Kd = 1
+        self.Kd = 2
         self.u_prev = [0, 0]
         self.x_prev = [0, 0, 0, 0]
         self.first = True
